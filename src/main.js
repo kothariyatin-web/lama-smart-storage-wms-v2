@@ -1,3 +1,4 @@
+import { supabase } from './services/supabase'
 import './style.css'
 
 document.querySelector('#app').innerHTML = `
@@ -60,3 +61,14 @@ document.querySelector('#app').innerHTML = `
 
 </div>
 `
+async function testConnection() {
+  const { data, error } = await supabase
+    .from('customers')
+    .select('*')
+    .limit(5)
+
+  console.log('Data:', data)
+  console.log('Error:', error)
+}
+
+testConnection()

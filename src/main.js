@@ -44,38 +44,54 @@ function renderApp(userEmail) {
 
     `
 
-    loadPage("dashboard", userEmail)
+    loadPage("dashboard")
 
+    // Sidebar Navigation
     document.querySelectorAll(".nav-btn").forEach(button => {
 
         if (button.disabled) return
 
         button.addEventListener("click", () => {
 
-            loadPage(button.dataset.page, userEmail)
+            const page = button.dataset.page
 
-            document.querySelectorAll(".nav-btn")
-                .forEach(b => b.classList.remove("active"))
+            document
+                .querySelectorAll(".nav-btn")
+                .forEach(btn => btn.classList.remove("active"))
 
             button.classList.add("active")
 
-            document.querySelector(".topbar h1").textContent =
-                button.textContent.trim()
+            const title = button.textContent.replace(/[^\w\s]/g, "").trim()
+
+            document.querySelector(".topbar h1").textContent = title
+
+            loadPage(page)
 
         })
 
     })
 
+    // Logout
+    document
+        .getElementById("logoutBtn")
+        ?.addEventListener("click", async () => {
+
+            await supabase.auth.signOut()
+
+            location.reload()
+
+        })
+
 }
 
-async function loadPage(page, userEmail) {
+async function loadPage(page) {
 
     const content = document.querySelector(".content")
 
     switch (page) {
 
         case "dashboard":
-            await showDashboard(content, userEmail)
+            await showDashboard(content)
             break
 
         case "customers":
@@ -83,8 +99,10 @@ async function loadPage(page, userEmail) {
             break
 
         default:
-            content.innerHTML = "<h2>Coming Soon</h2>"
-
+            content.innerHTML = `
+                <h2>Coming Soon</h2>
+                <p>This module is under development.</p>
+            `
     }
 
 }

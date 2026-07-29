@@ -1,62 +1,60 @@
 import { supabase } from "../services/supabase"
 
-export async function showCustomers() {
+export async function showCustomers(container) {
 
-    const { data: customers, error } =
-        await supabase
-            .from("customers")
-            .select("*")
-            .order("customer_code")
-
+    const { data: customers, error } = await supabase
+        .from("customers")
+        .select("*")
+        .order("customer_code")
+console.log("Customers:", customers)
+console.log("Error:", error)
     if (error) {
-
-        alert(error.message)
+        container.innerHTML = `<p>${error.message}</p>`
         return
-
     }
 
-    let rows = ""
+    renderTable(container, customers)
 
-    customers.forEach(customer => {
+    document
+        .getElementById("customerSearch")
+        .addEventListener("input", e => {
 
-        rows += `
+            const search = e.target.value.toLowerCase()
 
-        <tr>
+            const filtered = customers.filter(c =>
+                (c.customer_code || "").toLowerCase().includes(search) ||
+                (c.customer_name || "").toLowerCase().includes(search) ||
+                (c.mobile || "").toLowerCase().includes(search) ||
+                (c.gstin || "").toLowerCase().includes(search)
+            )
 
-            <td>${customer.customer_code}</td>
-            <td>${customer.customer_name}</td>
-            <td>${customer.mobile ?? ""}</td>
-            <td>${customer.gstin ?? ""}</td>
-            <td>${customer.active ? "Yes" : "No"}</td>
+            renderTable(container, filtered)
 
-        </tr>
+        })
 
-        `
+}
 
-    })
+function renderTable(container, rows) {
 
-    document.querySelector(".content").innerHTML = `
+    container.innerHTML = `
 
-        <header>
+        <div class="page-header">
 
-            <h1>Customer Master</h1>
+            <h2>Customers</h2>
 
-            <button id="addCustomer">
+            <button class="primary-btn">
                 + Add Customer
             </button>
 
-        </header>
-
-        <div class="searchBox">
-
-            <input
-                id="searchCustomer"
-                placeholder="Search customer..."
-            >
-
         </div>
 
-        <table class="customerTable">
+        <input
+            id="customerSearch"
+            class="search-box"
+            placeholder="Search customers..."
+        >
+
+        <table class="data-table">
 
             <thead>
 
@@ -64,9 +62,10 @@ export async function showCustomers() {
 
                     <th>Code</th>
                     <th>Name</th>
+                    <th>Contact</th>
                     <th>Mobile</th>
                     <th>GSTIN</th>
-                    <th>Active</th>
+                    <th>Status</th>
 
                 </tr>
 
@@ -74,7 +73,25 @@ export async function showCustomers() {
 
             <tbody>
 
-                ${rows}
+                ${rows.map(customer => `
+
+                    <tr>
+
+                        <td>${customer.customer_code ?? ""}</td>
+
+                        <td>${customer.customer_name ?? ""}</td>
+
+                        <td>${customer.contact_person ?? ""}</td>
+
+                        <td>${customer.mobile ?? ""}</td>
+
+                        <td>${customer.gstin ?? ""}</td>
+
+                        <td>${customer.active ? "🟢 Active" : "🔴 Inactive"}</td>
+
+                    </tr>
+
+                `).join("")}
 
             </tbody>
 

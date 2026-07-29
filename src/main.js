@@ -1,145 +1,91 @@
-import { supabase } from './services/supabase'
-import { showLogin } from './pages/login'
-import './style.css'
+import "./style.css"
+
+import { supabase } from "./services/supabase"
+
+import { showLogin } from "./pages/login"
+import { showDashboard } from "./pages/dashboard"
+import { showCustomers } from "./pages/customers"
+
+import { renderSidebar } from "./components/sidebar"
+import { renderHeader } from "./components/header"
 
 async function startApp() {
 
-  const {
-    data: { session }
-  } = await supabase.auth.getSession()
+    const {
+        data: { session }
+    } = await supabase.auth.getSession()
 
-  if (!session) {
+    if (!session) {
+        showLogin()
+        return
+    }
 
-    showLogin()
-    return
-
-  }
-
-  showDashboard()
+    renderApp(session.user.email)
 
 }
 
-function showDashboard() {
+function renderApp(userEmail) {
 
-  document.querySelector('#app').innerHTML = `
+    document.querySelector("#app").innerHTML = `
 
-  <div class="app">
+        <div class="app">
 
-    <aside class="sidebar">
+            ${renderSidebar("dashboard")}
 
-      <h2>LAMA WMS</h2>
+            <div class="main">
 
-      <ul>
-        <li class="active">🏠 Dashboard</li>
-        <li>📥 Inward</li>
-        <li>🏢 Warehouse</li>
-        <li>🚚 Dispatch</li>
-        <li>📷 QR Scan</li>
-        <li>🌡 Temperature</li>
-        <li>📊 Reports</li>
-        <li>⚙ Administration</li>
-      </ul>
+                ${renderHeader("Dashboard", userEmail)}
 
-    </aside>
+                <div class="content"></div>
 
-    <main class="content">
-
-      <header>
-
-        <h1>Lama Smart Storage WMS</h1>
-
-        <div class="user">
-
-          Administrator
-
-          <button id="logoutButton">
-            Logout
-          </button>
+            </div>
 
         </div>
 
-      </header>
+    `
 
-      <section class="cards">
+    loadPage("dashboard", userEmail)
 
-        <div class="card">
-          <h3>Today's GRNs</h3>
-          <p id="grnCount">0</p>
-        </div>
+    document.querySelectorAll(".nav-btn").forEach(button => {
 
-        <div class="card">
-          <h3>Pallets</h3>
-          <p id="palletCount">0</p>
-        </div>
+        if (button.disabled) return
 
-        <div class="card">
-          <h3>Warehouse Utilization</h3>
-          <p>0%</p>
-        </div>
+        button.addEventListener("click", () => {
 
-        <div class="card">
-          <h3>Available Locations</h3>
-          <p id="locationCount">0</p>
-        </div>
+            loadPage(button.dataset.page, userEmail)
 
-      </section>
+            document.querySelectorAll(".nav-btn")
+                .forEach(b => b.classList.remove("active"))
 
-    </main>
+            button.classList.add("active")
 
-  </div>
+            document.querySelector(".topbar h1").textContent =
+                button.textContent.trim()
 
-  `
+        })
 
-  document
-    .getElementById("logoutButton")
-    .addEventListener("click", logout)
-
-  loadDashboard()
+    })
 
 }
 
-async function loadDashboard() {
+async function loadPage(page, userEmail) {
 
-  const customers = await supabase
-    .from("customers")
-    .select("*")
+    const content = document.querySelector(".content")
 
-  console.log("Customers", customers)
+    switch (page) {
 
-  const pallets = await supabase
-    .from("pallets")
-    .select("*")
+        case "dashboard":
+            await showDashboard(content, userEmail)
+            break
 
-  console.log("Pallets", pallets)
+        case "customers":
+            await showCustomers(content)
+            break
 
-  const locations = await supabase
-    .from("locations")
-    .select("*")
+        default:
+            content.innerHTML = "<h2>Coming Soon</h2>"
 
-  console.log("Locations", locations)
-
-  const grns = await supabase
-    .from("grns")
-    .select("*")
-
-  console.log("GRNs", grns)
-
-  document.getElementById("grnCount").innerHTML =
-    grns.data ? grns.data.length : 0
-
-  document.getElementById("palletCount").innerHTML =
-    pallets.data ? pallets.data.length : 0
-
-  document.getElementById("locationCount").innerHTML =
-    locations.data ? locations.data.length : 0
-
-}
-
-async function logout() {
-
-  await supabase.auth.signOut()
-
-  location.reload()
+    }
 
 }
 
